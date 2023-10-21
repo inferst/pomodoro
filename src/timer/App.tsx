@@ -1,10 +1,5 @@
-import { createEffect, createSignal, onCleanup } from 'solid-js';
-
-enum PomodoroState {
-  focus = 'focus',
-  shortBreak = 'shortBreak',
-  longBreak = 'longBreak',
-}
+import { createSignal, onCleanup } from 'solid-js';
+import { PomodoroState, createPomodoro } from './pomodoro';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -14,56 +9,39 @@ function App() {
   const longBreakDuration = Number(searchParams.get('lb'));
   const rounds = Number(searchParams.get('r'));
 
-  const [round, setRound] = createSignal(0);
   const [seconds, setSeconds] = createSignal(0);
   const [minutes, setMinutes] = createSignal(focusDuration);
   const [state, setState] = createSignal<PomodoroState>(PomodoroState.focus);
 
   const [isPaused, setIsPaused] = createSignal(true);
 
-  const timer = setInterval(() => {
-    if (!isPaused()) {
-      if (seconds() == 0) {
-        setMinutes(minutes() - 1);
+  const pomodoro = createPomodoro({
+    focusDuration,
+    shortBreakDuration,
+    longBreakDuration,
+    rounds,
+    onTick: (data) => {
+      setSeconds(data.seconds);
+      setMinutes(data.minutes);
 
-        if (minutes() < 0) {
-          if (state() == PomodoroState.focus) {
-            setState(
-              round() >= rounds
-                ? PomodoroState.longBreak
-                : PomodoroState.shortBreak
-            );
-            setMinutes(
-              round() >= rounds ? longBreakDuration : shortBreakDuration
-            );
-          } else if (state() == PomodoroState.shortBreak) {
-            setState(PomodoroState.focus);
-            setMinutes(focusDuration);
-            setRound(round() + 1);
-          } else if (state() == PomodoroState.longBreak) {
-            setState(PomodoroState.focus);
-            setMinutes(focusDuration);
-            setRound(0);
-          }
-
-          const audio = new Audio('/alert.wav');
-          audio.play();
-
-          setIsPaused(true);
-        } else {
-          setSeconds(59);
-        }
-      } else {
-        setSeconds(seconds() - 1);
+      if (data.state != state()) {
+        setState(data.state);
+        setIsPaused(true);
       }
-    }
-  }, 10);
-
-  onCleanup(() => {
-    clearInterval(timer);
+    },
   });
 
-  const handlePuase = () => {
+  onCleanup(() => {
+    pomodoro.pause();
+  });
+
+  const handlePause = () => {
+    if (isPaused()) {
+      pomodoro.start();
+    } else {
+      pomodoro.pause();
+    }
+
     setIsPaused(!isPaused());
   };
 
@@ -74,7 +52,7 @@ function App() {
       </div>
       <div>{state()}</div>
       <div>
-        <button onClick={handlePuase}>{isPaused() ? 'Play' : 'Pause'}</button>
+        <button onClick={handlePause}>{isPaused() ? 'Play' : 'Pause'}</button>
       </div>
     </>
   );
