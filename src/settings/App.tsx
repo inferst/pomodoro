@@ -1,14 +1,19 @@
-import { createSignal } from 'solid-js';
-import './App.css';
+import { createMemo, createSignal } from 'solid-js';
+import styles from './App.module.scss';
+import clsx from 'clsx';
 
 function App() {
   const [focusDuration, setFocusDuration] = createSignal(25);
   const [shortBreakDuration, setShortBreakDuration] = createSignal(5);
   const [longBreakDuration, setLongBreakDuration] = createSignal(15);
+  const [rounds, setRounds] = createSignal(4);
+  const [isCopied, setIsCopied] = createSignal(false);
 
-  const url = () =>
-    'http://localhost:5173/timer/?' +
-    `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}`;
+  const url = createMemo(
+    () =>
+      'http://localhost:5173/timer/?' +
+      `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}&r=${rounds()}`
+  );
 
   let inputRef: HTMLInputElement | undefined;
 
@@ -18,11 +23,19 @@ function App() {
     inputRef.select();
     navigator.clipboard.writeText(inputRef.value);
 
-    console.log(inputRef.value);
+    setIsCopied(true);
+
+    setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
+  };
+
+  const handlePreviewClick = () => {
+    window.open(url(), '', 'width=300,height=400');
   };
 
   return (
-    <div id="root" class="container">
+    <div class={clsx(styles.root, 'container')}>
       <h1>Settings</h1>
 
       <div class="grid">
@@ -75,6 +88,21 @@ function App() {
         </label>
       </div>
 
+      <label for="rounds">
+        Rounds
+        <input
+          type="number"
+          id="rounds"
+          name="rounds"
+          required
+          min={1}
+          onInput={(e) => {
+            setRounds(parseInt(e.currentTarget.value));
+          }}
+          value={rounds()}
+        />
+      </label>
+
       <label for="url">
         Timer URL
         <input
@@ -88,7 +116,9 @@ function App() {
         />
       </label>
 
-      <p>Copied!</p>
+      {isCopied() && <p>Copied!</p>}
+
+      <button onClick={handlePreviewClick}>Preview</button>
     </div>
   );
 }

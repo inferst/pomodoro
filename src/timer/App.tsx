@@ -1,35 +1,83 @@
-import { createSignal } from 'solid-js'
-import solidLogo from '../assets/solid.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { createEffect, createSignal, onCleanup } from 'solid-js';
+
+enum PomodoroState {
+  focus = 'focus',
+  shortBreak = 'shortBreak',
+  longBreak = 'longBreak',
+}
 
 function App() {
-  const [count, setCount] = createSignal(0)
+  const searchParams = new URLSearchParams(window.location.search);
+
+  const focusDuration = Number(searchParams.get('fd'));
+  const shortBreakDuration = Number(searchParams.get('sb'));
+  const longBreakDuration = Number(searchParams.get('lb'));
+  const rounds = Number(searchParams.get('r'));
+
+  const [round, setRound] = createSignal(0);
+  const [seconds, setSeconds] = createSignal(0);
+  const [minutes, setMinutes] = createSignal(focusDuration);
+  const [state, setState] = createSignal<PomodoroState>(PomodoroState.focus);
+
+  const [isPaused, setIsPaused] = createSignal(true);
+
+  const timer = setInterval(() => {
+    if (!isPaused()) {
+      if (seconds() == 0) {
+        setMinutes(minutes() - 1);
+
+        if (minutes() < 0) {
+          if (state() == PomodoroState.focus) {
+            setState(
+              round() >= rounds
+                ? PomodoroState.longBreak
+                : PomodoroState.shortBreak
+            );
+            setMinutes(
+              round() >= rounds ? longBreakDuration : shortBreakDuration
+            );
+          } else if (state() == PomodoroState.shortBreak) {
+            setState(PomodoroState.focus);
+            setMinutes(focusDuration);
+            setRound(round() + 1);
+          } else if (state() == PomodoroState.longBreak) {
+            setState(PomodoroState.focus);
+            setMinutes(focusDuration);
+            setRound(0);
+          }
+
+          const audio = new Audio('/alert.wav');
+          audio.play();
+
+          setIsPaused(true);
+        } else {
+          setSeconds(59);
+        }
+      } else {
+        setSeconds(seconds() - 1);
+      }
+    }
+  }, 10);
+
+  onCleanup(() => {
+    clearInterval(timer);
+  });
+
+  const handlePuase = () => {
+    setIsPaused(!isPaused());
+  };
 
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://solidjs.com" target="_blank">
-          <img src={solidLogo} class="logo solid" alt="Solid logo" />
-        </a>
+        {minutes()} : {seconds()}
       </div>
-      <h1>Timer</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count()}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div>{state()}</div>
+      <div>
+        <button onClick={handlePuase}>{isPaused() ? 'Play' : 'Pause'}</button>
       </div>
-      <p class="read-the-docs">
-        Click on the Vite and Solid logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
