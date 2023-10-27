@@ -2,6 +2,7 @@ import { createMemo, createSignal, onCleanup } from 'solid-js';
 import { PomodoroState, createPomodoro } from './pomodoro';
 
 import styles from './App.module.scss';
+import { connection } from './connection';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -17,6 +18,16 @@ function App() {
 
   const [isPaused, setIsPaused] = createSignal(true);
 
+  const room = connection(() => {
+    if (isPaused()) {
+      pomodoro.start();
+    } else {
+      pomodoro.pause();
+    }
+
+    setIsPaused(!isPaused());
+  });
+
   const pomodoro = createPomodoro({
     focusDuration,
     shortBreakDuration,
@@ -29,6 +40,7 @@ function App() {
       if (data.state != state()) {
         setState(data.state);
         setIsPaused(true);
+        room.playPause(true);
       }
     },
   });
@@ -37,20 +49,8 @@ function App() {
     pomodoro.pause();
   });
 
-  const handlePause = () => {
-    if (isPaused()) {
-      pomodoro.start();
-    } else {
-      pomodoro.pause();
-    }
-
-    setIsPaused(!isPaused());
-  };
-
   const timerSeconds = createMemo(() => seconds().toString().padStart(2, '0'));
   const timerMinutes = createMemo(() => minutes().toString().padStart(2, '0'));
-
-  console.log(timerSeconds());
 
   return (
     <div class={styles.container}>
@@ -68,9 +68,6 @@ function App() {
             </div>
           </div>
           <div class={styles.state}>{state()}</div>
-        </div>
-        <div class={styles.button_container}>
-          <button onClick={handlePause}>{isPaused() ? 'Play' : 'Pause'}</button>
         </div>
       </div>
     </div>

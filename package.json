@@ -12,6 +12,7 @@
     "@picocss/pico": "^1.5.10",
     "clsx": "^2.0.0",
     "modern-normalize": "^2.0.0",
+    "socket.io-client": "^4.7.2",
     "solid-js": "^1.7.8"
   },
   "devDependencies": {
