@@ -33,7 +33,7 @@ const createTimer = (onTick) => {
         seconds,
         minutes,
       });
-    }, 10);
+    }, 1000);
   };
 
   const clearTimer = () => {
