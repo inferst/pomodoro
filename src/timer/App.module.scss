@@ -8,18 +8,26 @@
   display: flex;
   justify-content: center;
   font-family: timerFont;
+  color: white;
+
+  .wrapper {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 0 10px 5px 10px;
+  }
 
   .timer {
     display: flex;
     justify-content: center;
     font-size: 60px;
+    line-height: 1;
 
     .number {
       width: 26px;
       text-align: end;
     }
 
-    .minutes, .seconds {
+    .minutes,
+    .seconds {
       display: flex;
       justify-content: center;
     }
@@ -28,7 +36,8 @@
   .state {
     display: flex;
     justify-content: center;
-    font-size: 40px;
+    font-size: 20px;
+    line-height: 1;
   }
 
   .button_container {

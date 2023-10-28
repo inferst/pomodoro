@@ -21,6 +21,8 @@ function App() {
   }
 
   const timerWorker = new TimerWorker();
+  const alarm = new Audio('/clock_alarm.mp3');
+  alarm.volume = 0.2;
 
   timerWorker.onmessage = (message) => {
     if (message.data.type == 'tick') {
@@ -48,6 +50,10 @@ function App() {
       timerWorker.postMessage({
         type: 'clearTimer',
       });
+    }
+
+    if (state.isFinished) {
+      alarm.play();
     }
   });
 

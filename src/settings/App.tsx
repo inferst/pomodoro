@@ -36,8 +36,8 @@ function App() {
 
   const url = createMemo(
     () =>
-    import.meta.env.VITE_HOST + '/timer/?' +
-      `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}&r=${rounds()}&room=${pomodoroId}`
+      import.meta.env.VITE_HOST +
+      `/timer/?room=${pomodoroId}`
   );
 
   let inputRef: HTMLInputElement | undefined;
@@ -62,7 +62,16 @@ function App() {
   const handleToggle = () => {
     const newValue = !state()?.play;
     room.toggle(newValue);
-  }
+  };
+
+  const handleSaveClick = () => {
+    room.update({
+      focusDuration: focusDuration(),
+      shortBreakDuration: shortBreakDuration(),
+      longBreakDuration: longBreakDuration(),
+      rounds: rounds(),
+    });
+  };
 
   return (
     <div class={clsx(styles.root, 'container')}>
@@ -153,6 +162,8 @@ function App() {
       </label>
 
       {isCopied() && <p>Copied!</p>}
+
+      <button onClick={handleSaveClick}>Save</button>
 
       <button onClick={handlePreviewClick}>Preview</button>
     </div>

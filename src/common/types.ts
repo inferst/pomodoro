@@ -11,6 +11,7 @@ export type PomodoroState = {
   round: number;
   status: PomodoroStatus;
   play: boolean;
+  isFinished?: boolean;
 };
 
 export enum PomodoroStatus {
