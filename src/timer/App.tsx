@@ -1,52 +1,47 @@
 import { createMemo, createSignal, onCleanup } from 'solid-js';
-import { PomodoroState, createPomodoro } from './pomodoro';
+import { createTimer } from './timer';
 
 import styles from './App.module.scss';
-import { connection } from './connection';
+import { PomodoroStatus, connection } from './connection';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
-
-  const focusDuration = Number(searchParams.get('fd'));
-  const shortBreakDuration = Number(searchParams.get('sb'));
-  const longBreakDuration = Number(searchParams.get('lb'));
-  const rounds = Number(searchParams.get('r'));
+  const roomId = searchParams.get('room');
 
   const [seconds, setSeconds] = createSignal(0);
-  const [minutes, setMinutes] = createSignal(focusDuration);
-  const [state, setState] = createSignal<PomodoroState>(PomodoroState.focus);
+  const [minutes, setMinutes] = createSignal(0);
+  const [status, setStatus] = createSignal<PomodoroStatus>(PomodoroStatus.focus);
 
-  const [isPaused, setIsPaused] = createSignal(true);
-
-  const room = connection(() => {
-    if (isPaused()) {
-      pomodoro.start();
-    } else {
-      pomodoro.pause();
-    }
-
-    setIsPaused(!isPaused());
-  });
-
-  const pomodoro = createPomodoro({
-    focusDuration,
-    shortBreakDuration,
-    longBreakDuration,
-    rounds,
+  const [play, setPlay] = createSignal(true);
+  
+  const timer = createTimer({
     onTick: (data) => {
       setSeconds(data.seconds);
       setMinutes(data.minutes);
-
-      if (data.state != state()) {
-        setState(data.state);
-        setIsPaused(true);
-        room.playPause(true);
-      }
     },
   });
 
+  const room = connection((state) => {
+    setSeconds(state.seconds);
+    setMinutes(state.minutes);
+    setStatus(state.status);
+    setPlay(state.play);
+
+    timer.set(state);
+    
+    if (play()) {
+      timer.start();
+    } else {
+      timer.clearTimer();
+    }
+  });
+
+  if (roomId) {
+    room.get(roomId);
+  }
+
   onCleanup(() => {
-    pomodoro.pause();
+    timer.clearTimer();
   });
 
   const timerSeconds = createMemo(() => seconds().toString().padStart(2, '0'));
@@ -67,7 +62,7 @@ function App() {
               <div class={styles.number}>{timerSeconds()[1]}</div>
             </div>
           </div>
-          <div class={styles.state}>{state()}</div>
+          <div class={styles.state}>{status()}</div>
         </div>
       </div>
     </div>

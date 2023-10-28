@@ -1,7 +1,7 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import styles from './App.module.scss';
 import clsx from 'clsx';
-import { connection } from './connection';
+import { connection, PomodoroState } from './connection';
 
 function App() {
   const [focusDuration, setFocusDuration] = createSignal(25);
@@ -9,10 +9,17 @@ function App() {
   const [longBreakDuration, setLongBreakDuration] = createSignal(15);
   const [rounds, setRounds] = createSignal(4);
   const [isCopied, setIsCopied] = createSignal(false);
-  const [state, setState] = createSignal({ isPaused: true });
+  const [state, setState] = createSignal<PomodoroState>();
 
   const room = connection((state) => {
     setState(state);
+  });
+
+  room.init({
+    focusDuration: focusDuration(),
+    shortBreakDuration: shortBreakDuration(),
+    longBreakDuration: longBreakDuration(),
+    rounds: rounds(),
   });
 
   const url = createMemo(
@@ -40,19 +47,17 @@ function App() {
     window.open(url(), '', 'width=300,height=400');
   };
 
-  const handlePlayPause = () => {
-    room.playPause();
-    setState({
-      isPaused: !state().isPaused,
-    })
+  const handleToggle = () => {
+    const newValue = !state()?.play;
+    room.toggle(newValue);
   }
 
   return (
     <div class={clsx(styles.root, 'container')}>
       <h1>Settings</h1>
 
-      <button onClick={handlePlayPause}>
-        <Show when={state().isPaused} fallback={'Pause'}>
+      <button onClick={handleToggle}>
+        <Show when={!state()?.play} fallback={'Pause'}>
           Play
         </Show>
       </button>

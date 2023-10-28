@@ -1,30 +1,38 @@
 import { io } from 'socket.io-client';
 
-export const connection = (onPlayPause: () => void) => {
+export type PomodoroState = {
+  seconds: number;
+  minutes: number;
+  round: number;
+  status: PomodoroStatus;
+  play: boolean;
+};
+
+export enum PomodoroStatus {
+  focus = 'focus',
+  shortBreak = 'shortBreak',
+  longBreak = 'longBreak',
+}
+
+export const connection = (onUpdate: (state: PomodoroState) => void) => {
   const socket = io('http://localhost:3000');
 
   socket.on('connect', () => {
     console.log('connected');
 
-    const searchParams = new URLSearchParams(window.location.search);
-    const room = searchParams.get('room');
-
     socket.on('disconnect', () => {
       console.log('disconnected');
     });
 
-    socket.emit('create_room', {
-      id: room,
-    });
-
-    socket.on('play_pause', () => {
-      onPlayPause();
+    socket.on('client_update', (state) => {
+      onUpdate(state);
+      console.log('client_update', state);
     });
   });
 
   return {
-    playPause: (isPaused: boolean) => {
-      socket.emit('state', { isPaused});
+    get: (roomId: string) => {
+      socket.emit('server_get', { roomId });
     },
   };
 };
