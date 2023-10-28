@@ -1,8 +1,10 @@
 import { createMemo, createSignal, onCleanup } from 'solid-js';
-import { createTimer } from './timer';
 
 import styles from './App.module.scss';
-import { PomodoroStatus, connection } from './connection';
+import { createConnection } from '../common/connection';
+import { PomodoroStatus } from '../common/types';
+
+import TimerWorker from '../assets/timer_worker.js?worker';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -12,36 +14,49 @@ function App() {
   const [minutes, setMinutes] = createSignal(0);
   const [status, setStatus] = createSignal<PomodoroStatus>(PomodoroStatus.focus);
 
-  const [play, setPlay] = createSignal(true);
-  
-  const timer = createTimer({
-    onTick: (data) => {
-      setSeconds(data.seconds);
-      setMinutes(data.minutes);
-    },
-  });
+  const [play, setPlay] = createSignal(false);
 
-  const room = connection((state) => {
+  if (!roomId) {
+    return;
+  }
+
+  const timerWorker = new TimerWorker();
+
+  timerWorker.onmessage = (message) => {
+    if (message.data.type == 'tick') {
+      setSeconds(message.data.data.seconds);
+      setMinutes(message.data.data.minutes);
+    }
+  };
+
+  const room = createConnection(roomId, (state) => {
     setSeconds(state.seconds);
     setMinutes(state.minutes);
     setStatus(state.status);
     setPlay(state.play);
 
-    timer.set(state);
+    timerWorker.postMessage({
+      type: 'set',
+      data: state,
+    });
     
     if (play()) {
-      timer.start();
+      timerWorker.postMessage({
+        type: 'start',
+      });
     } else {
-      timer.clearTimer();
+      timerWorker.postMessage({
+        type: 'clearTimer',
+      });
     }
   });
 
-  if (roomId) {
-    room.get(roomId);
-  }
+  room.get();
 
   onCleanup(() => {
-    timer.clearTimer();
+    timerWorker.postMessage({
+      type: 'clearTimer',
+    });
   });
 
   const timerSeconds = createMemo(() => seconds().toString().padStart(2, '0'));

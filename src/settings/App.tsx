@@ -1,7 +1,10 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import styles from './App.module.scss';
 import clsx from 'clsx';
-import { connection, PomodoroState } from './connection';
+import { nanoid } from 'nanoid';
+import Cookies from 'js-cookie';
+import { createConnection } from '../common/connection';
+import { PomodoroState } from '../common/types';
 
 function App() {
   const [focusDuration, setFocusDuration] = createSignal(25);
@@ -11,7 +14,14 @@ function App() {
   const [isCopied, setIsCopied] = createSignal(false);
   const [state, setState] = createSignal<PomodoroState>();
 
-  const room = connection((state) => {
+  let pomodoroId = Cookies.get('pomodoro_id');
+
+  if (!pomodoroId) {
+    pomodoroId = nanoid(8);
+    Cookies.set('pomodoro_id', pomodoroId);
+  }
+
+  const room = createConnection(pomodoroId, (state) => {
     setState(state);
   });
 
@@ -22,10 +32,12 @@ function App() {
     rounds: rounds(),
   });
 
+  room.get();
+
   const url = createMemo(
     () =>
-      'http://pomodoro.mikedanagam.space/timer/?' +
-      `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}&r=${rounds()}&room=${room.roomId}`
+    import.meta.env.VITE_HOST + '/timer/?' +
+      `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}&r=${rounds()}&room=${pomodoroId}`
   );
 
   let inputRef: HTMLInputElement | undefined;

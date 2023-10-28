@@ -1,25 +1,17 @@
-type OnTickProps = {
-  seconds: number;
-  minutes: number;
-};
-
-export type TimerProps = {
-  onTick: (props: OnTickProps) => void;
-};
-
-export type TimerSetProps = {
-  seconds: number;
-  minutes: number;
+onmessage = (message) => {
+  if (message.data.type == 'start') {
+    timer.start();
+  } else if (message.data.type == 'clearTimer') {
+    timer.clearTimer();
+  } else if (message.data.type == 'set') {
+    timer.set(message.data.data);
+  }
 }
 
-export const createTimer = (props: TimerProps) => {
-  const {
-    onTick,
-  } = props;
-
+const createTimer = (onTick) => {
   let seconds = 0;
   let minutes = 0;
-  let timer: number;
+  let timer;
 
   const start = () => {
     clearTimer();
@@ -50,7 +42,7 @@ export const createTimer = (props: TimerProps) => {
     }
   };
 
-  const set = (props: TimerSetProps) => {
+  const set = (props) => {
     seconds = props.seconds
     minutes = props.minutes;
   };
@@ -61,3 +53,10 @@ export const createTimer = (props: TimerProps) => {
     set,
   };
 };
+
+const timer = createTimer((data) => {
+  postMessage({
+    type: 'tick',
+    data,
+  });
+});
