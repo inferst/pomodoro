@@ -15,7 +15,7 @@ export enum PomodoroStatus {
 }
 
 export const connection = (onUpdate: (state: PomodoroState) => void) => {
-  const socket = io('http://localhost:3000');
+  const socket = io('http://pomodoro.mikedanagam.space/api');
 
   socket.on('connect', () => {
     console.log('connected');

@@ -24,7 +24,7 @@ function App() {
 
   const url = createMemo(
     () =>
-      'http://localhost:5173/timer/?' +
+      'http://pomodoro.mikedanagam.space/timer/?' +
       `fd=${focusDuration()}&sb=${shortBreakDuration()}&lb=${longBreakDuration()}&r=${rounds()}&room=${room.roomId}`
   );
 

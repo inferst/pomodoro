@@ -22,7 +22,7 @@ export enum PomodoroStatus {
 }
 
 export const connection = (onUpdate: (state: PomodoroState) => void) => {
-  const socket = io('http://localhost:3000');
+  const socket = io('http://pomodoro.mikedanagam.space/api');
 
   const url = new URLSearchParams(location.search);
   const roomId = url.get('room');
