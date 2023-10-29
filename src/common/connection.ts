@@ -1,18 +1,29 @@
-import { io } from 'socket.io-client';
-import { PomodoroState, PomodoroUpdateProps } from './types';
+import { Socket, io } from 'socket.io-client';
+import {
+  ClientToServerEvents,
+  GetSettingsCallback,
+  GetStateCallback,
+  ServerToClientEvents,
+} from './socket.types';
+import { PomodoroSettings, PomodoroState } from './pomodoro.types';
 
-export const createConnection = (roomId: string, onUpdate: (state: PomodoroState) => void) => {
-  const socket = io(import.meta.env.VITE_SOCKET_HOST, {
-    path: import.meta.env.VITE_SOCKET_PATH,
-  });
+export const createConnection = (
+  roomId: string,
+  onUpdate: (state: PomodoroState) => void
+) => {
+  const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
+    import.meta.env.VITE_SOCKET_HOST,
+    {
+      path: import.meta.env.VITE_SOCKET_PATH,
+    }
+  );
 
   socket.on('connect', () => {
     console.log('connected');
   });
 
-  socket.on('client_update', (state) => {
+  socket.on('updateState', (state) => {
     onUpdate(state);
-    console.log('client_update', state);
   });
 
   socket.on('disconnect', () => {
@@ -20,20 +31,20 @@ export const createConnection = (roomId: string, onUpdate: (state: PomodoroState
   });
 
   return {
-    init: (props: PomodoroUpdateProps) => {
-      socket.emit('server_init', { ...props, roomId });
+    getSettings: (callback: GetSettingsCallback) => {
+      socket.emit('getSettings', { roomId }, callback);
     },
-    update: (props: PomodoroUpdateProps) => {
-      socket.emit('server_update', props);
+    updateSettings: (props: PomodoroSettings) => {
+      socket.emit('updateSettings', props);
     },
-    toggle: (play: boolean) => {
-      socket.emit('server_toggle', play);
+    getState: (callback: GetStateCallback) => {
+      socket.emit('getState', { roomId }, callback);
     },
-    get: () => {
-      socket.emit('server_get', { roomId }, (state: any) => {
-        onUpdate(state);
-        console.log('server_get', state);
-      });
+    run: () => {
+      socket.emit('run');
+    },
+    pause: () => {
+      socket.emit('pause');
     },
   };
 };

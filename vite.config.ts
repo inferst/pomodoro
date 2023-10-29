@@ -1,6 +1,6 @@
-import path from 'path'
-import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import path from 'path';
+import { defineConfig } from 'vite';
+import solid from 'vite-plugin-solid';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +16,6 @@ export default defineConfig(() => {
           nested: path.resolve(__dirname, 'timer/index.html'),
         },
       },
-    }
+    },
   };
-})
+});

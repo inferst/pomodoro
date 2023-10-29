@@ -4,15 +4,18 @@ import clsx from 'clsx';
 import { nanoid } from 'nanoid';
 import Cookies from 'js-cookie';
 import { createConnection } from '../common/connection';
-import { PomodoroState } from '../common/types';
+import { PomodoroState, PomodoroTimerState } from '../common/pomodoro.types';
 
 function App() {
-  const [focusDuration, setFocusDuration] = createSignal(25);
-  const [shortBreakDuration, setShortBreakDuration] = createSignal(5);
-  const [longBreakDuration, setLongBreakDuration] = createSignal(15);
-  const [rounds, setRounds] = createSignal(4);
+  const [focusDuration, setFocusDuration] = createSignal(0);
+  const [shortBreakDuration, setShortBreakDuration] = createSignal(0);
+  const [longBreakDuration, setLongBreakDuration] = createSignal(0);
+  const [rounds, setRounds] = createSignal(0);
   const [isCopied, setIsCopied] = createSignal(false);
+  
   const [state, setState] = createSignal<PomodoroState>();
+
+  const isRunning = () => state()?.state == PomodoroTimerState.isRunning;
 
   let pomodoroId = Cookies.get('pomodoro_id');
 
@@ -25,14 +28,16 @@ function App() {
     setState(state);
   });
 
-  room.init({
-    focusDuration: focusDuration(),
-    shortBreakDuration: shortBreakDuration(),
-    longBreakDuration: longBreakDuration(),
-    rounds: rounds(),
+  room.getSettings((settings, state) => {
+    setState(state);
+
+    setFocusDuration(settings.focusDuration);
+    setLongBreakDuration(settings.longBreakDuration);
+    setShortBreakDuration(settings.shortBreakDuration);
+    setRounds(settings.rounds);
   });
 
-  room.get();
+  room.getState(() => {});
 
   const url = createMemo(
     () =>
@@ -60,12 +65,16 @@ function App() {
   };
 
   const handleToggle = () => {
-    const newValue = !state()?.play;
-    room.toggle(newValue);
+    if (isRunning()) {
+      room.pause();
+    } else {
+      room.run();
+    }
+    
   };
 
   const handleSaveClick = () => {
-    room.update({
+    room.updateSettings({
       focusDuration: focusDuration(),
       shortBreakDuration: shortBreakDuration(),
       longBreakDuration: longBreakDuration(),
@@ -78,7 +87,7 @@ function App() {
       <h1>Settings</h1>
 
       <button onClick={handleToggle}>
-        <Show when={!state()?.play} fallback={'Pause'}>
+        <Show when={!isRunning()} fallback={'Pause'}>
           Play
         </Show>
       </button>

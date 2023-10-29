@@ -2,9 +2,13 @@ import { createMemo, createSignal, onCleanup } from 'solid-js';
 
 import styles from './App.module.scss';
 import { createConnection } from '../common/connection';
-import { PomodoroStatus } from '../common/types';
 
 import TimerWorker from '../assets/timer_worker.js?worker';
+import {
+  PomodoroState,
+  PomodoroTimerState,
+  PomodoroTimerStatus,
+} from '../common/pomodoro.types';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -12,9 +16,9 @@ function App() {
 
   const [seconds, setSeconds] = createSignal(0);
   const [minutes, setMinutes] = createSignal(0);
-  const [status, setStatus] = createSignal<PomodoroStatus>(PomodoroStatus.focus);
-
-  const [play, setPlay] = createSignal(false);
+  const [status, setStatus] = createSignal<PomodoroTimerStatus>(
+    PomodoroTimerStatus.focus
+  );
 
   if (!roomId) {
     return;
@@ -31,18 +35,17 @@ function App() {
     }
   };
 
-  const room = createConnection(roomId, (state) => {
+  const setPomodoroState = (state: PomodoroState) => {
     setSeconds(state.seconds);
     setMinutes(state.minutes);
     setStatus(state.status);
-    setPlay(state.play);
 
     timerWorker.postMessage({
       type: 'set',
       data: state,
     });
-    
-    if (play()) {
+
+    if (state.state == PomodoroTimerState.isRunning) {
       timerWorker.postMessage({
         type: 'start',
       });
@@ -51,13 +54,17 @@ function App() {
         type: 'clearTimer',
       });
     }
+  };
 
-    if (state.isFinished) {
+  const room = createConnection(roomId, (state) => {
+    setPomodoroState(state);
+
+    if (state.state == PomodoroTimerState.isFinished) {
       alarm.play();
     }
   });
 
-  room.get();
+  room.getState(setPomodoroState);
 
   onCleanup(() => {
     timerWorker.postMessage({
