@@ -4,8 +4,8 @@ import {
   GetSettingsCallback,
   GetStateCallback,
   ServerToClientEvents,
-} from './socket.types';
-import { PomodoroSettings, PomodoroState } from './pomodoro.types';
+} from './types/socket.types';
+import { PomodoroSettings, PomodoroState } from './types/pomodoro.types';
 
 export const createConnection = (
   roomId: string,
@@ -22,12 +22,12 @@ export const createConnection = (
     console.log('connected');
   });
 
-  socket.on('updateState', (state) => {
-    onUpdate(state);
-  });
-
   socket.on('disconnect', () => {
     console.log('disconnected');
+  });
+
+  socket.on('updateState', (state) => {
+    onUpdate(state);
   });
 
   return {

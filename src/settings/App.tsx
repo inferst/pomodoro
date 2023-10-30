@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { nanoid } from 'nanoid';
 import Cookies from 'js-cookie';
 import { createConnection } from '../common/connection';
-import { PomodoroState, PomodoroTimerState } from '../common/pomodoro.types';
+import { PomodoroState, PomodoroTimerState } from '../common/types/pomodoro.types';
 
 function App() {
   const [focusDuration, setFocusDuration] = createSignal(0);

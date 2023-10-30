@@ -3,12 +3,12 @@ import { createMemo, createSignal, onCleanup } from 'solid-js';
 import styles from './App.module.scss';
 import { createConnection } from '../common/connection';
 
-import TimerWorker from '../assets/timer_worker.js?worker';
 import {
   PomodoroState,
   PomodoroTimerState,
   PomodoroTimerStatus,
-} from '../common/pomodoro.types';
+} from '../common/types/pomodoro.types';
+import { createTimerWorker } from '../common/timerWorker';
 
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -24,39 +24,31 @@ function App() {
     return;
   }
 
-  const timerWorker = new TimerWorker();
+  const timerWorker = createTimerWorker({
+    onTick: (state) => {
+      setSeconds(state.seconds);
+      setMinutes(state.minutes);
+    },
+  });
+
   const alarm = new Audio('/clock_alarm.mp3');
   alarm.volume = 0.2;
-
-  timerWorker.onmessage = (message) => {
-    if (message.data.type == 'tick') {
-      setSeconds(message.data.data.seconds);
-      setMinutes(message.data.data.minutes);
-    }
-  };
 
   const setPomodoroState = (state: PomodoroState) => {
     setSeconds(state.seconds);
     setMinutes(state.minutes);
     setStatus(state.status);
 
-    timerWorker.postMessage({
-      type: 'set',
-      data: state,
-    });
+    timerWorker.set(state);
 
     if (state.state == PomodoroTimerState.isRunning) {
-      timerWorker.postMessage({
-        type: 'start',
-      });
+      timerWorker.start();
     } else {
-      timerWorker.postMessage({
-        type: 'clearTimer',
-      });
+      timerWorker.clearTimer();
     }
   };
 
-  const room = createConnection(roomId, (state) => {
+  const connection = createConnection(roomId, (state) => {
     setPomodoroState(state);
 
     if (state.state == PomodoroTimerState.isFinished) {
@@ -64,12 +56,10 @@ function App() {
     }
   });
 
-  room.getState(setPomodoroState);
+  connection.getState(setPomodoroState);
 
   onCleanup(() => {
-    timerWorker.postMessage({
-      type: 'clearTimer',
-    });
+    timerWorker.terminate();
   });
 
   const timerSeconds = createMemo(() => seconds().toString().padStart(2, '0'));
