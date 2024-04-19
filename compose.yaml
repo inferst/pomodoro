@@ -1,0 +1,17 @@
+services:
+  app:
+    image: node:20-alpine
+    command: sh -c "npm i && npm run start"
+    container_name: pomodoro
+    working_dir: /app
+    build: .
+    volumes:
+      - ./:/app
+    environment:
+      - SOCKET_HOST=${SOCKET_HOST}
+    user: $DOCKER_USER
+
+networks:
+  default:
+    external: true
+    name: scoobydoo

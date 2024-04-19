@@ -1,0 +1,17 @@
+{
+  "name": "pomodoro",
+  "workspaces": [
+    "apps/frontend",
+    "apps/backend"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "dotenv -e .env.development -- turbo run start:dev --parallel",
+    "start": "dotenv -- npm run build && npm run start:prod --workspace=apps/backend",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.4.1",
+    "turbo": "^1.10.16"
+  }
+}
