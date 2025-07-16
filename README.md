@@ -1,4 +1,4 @@
-# Pomodoro Overlay
+# Pomodoro
 
 A simple pomodoro timer for stream.
 
