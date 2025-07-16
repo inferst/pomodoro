@@ -1,18 +1,16 @@
 # Pomodoro Overlay
 
-## Features
-
-A simple pomodoro timer for broadcast.
+A simple pomodoro timer for stream.
 
 ## Usage
 
-Open OBS or any streaming tool which supported browser overlay.
+Open OBS or any streaming tool that supports browser overlays.
 
-Put URL to the browser source.
+Add the provided URL to a browser source.
 
 ## Development
 
-This is mono repo which contains frontend and backend.
+This is a monorepo that contains both frontend and backend.
 
 ```
 npm install
